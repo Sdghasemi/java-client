@@ -22,7 +22,7 @@ import microsoft.aspnet.signalr.client.http.HttpConnection;
  * ClientTransport implementation that selects the best available transport
  */
 public class AutomaticTransport extends HttpClientTransport {
-
+    private final int DEFAULT_LAUCH_MODE = 0;
     private List<ClientTransport> mTransports;
     private ClientTransport mRealTransport;
 
@@ -35,7 +35,7 @@ public class AutomaticTransport extends HttpClientTransport {
 
     /**
      * Initializes the transport with a logger
-     * 
+     *
      * @param logger
      *            logger to log actions
      */
@@ -46,7 +46,7 @@ public class AutomaticTransport extends HttpClientTransport {
 
     /**
      * Initializes the transport with a logger and an httpConnection
-     * 
+     *
      * @param logger
      *            the logger
      * @param httpConnection
@@ -78,18 +78,16 @@ public class AutomaticTransport extends HttpClientTransport {
         if (mRealTransport != null) {
             return mRealTransport.supportKeepAlive();
         }
-
         return false;
     }
 
     private void resolveTransport(final ConnectionBase connection, final ConnectionType connectionType, final DataResultCallback callback,
-            final int currentTransportIndex, final SignalRFuture<Void> startFuture) {
+                                  final int currentTransportIndex, final SignalRFuture<Void> startFuture) {
         final ClientTransport currentTransport = mTransports.get(currentTransportIndex);
 
         final SignalRFuture<Void> transportStart = currentTransport.start(connection, connectionType, callback);
 
         transportStart.done(new Action<Void>() {
-
             @Override
             public void run(Void obj) throws Exception {
                 // set the real transport and trigger end the start future
@@ -99,16 +97,13 @@ public class AutomaticTransport extends HttpClientTransport {
         });
 
         final ErrorCallback handleError = new ErrorCallback() {
-
             @Override
             public void onError(Throwable error) {
-
                 // if the transport is already started, forward the error
                 if (mRealTransport != null) {
                     startFuture.triggerError(error);
                     return;
                 }
-
                 log(String.format("Auto: Faild to connect using transport %s. %s", currentTransport.getName(), error.toString()), LogLevel.Information);
                 int next = currentTransportIndex + 1;
                 if (next < mTransports.size()) {
@@ -120,9 +115,8 @@ public class AutomaticTransport extends HttpClientTransport {
         };
 
         transportStart.onError(handleError);
-        
-        startFuture.onCancelled(new Runnable() {
 
+        startFuture.onCancelled(new Runnable() {
             @Override
             public void run() {
                 // if the transport is already started, forward the cancellation
@@ -130,7 +124,6 @@ public class AutomaticTransport extends HttpClientTransport {
                     transportStart.cancel();
                     return;
                 }
-
                 handleError.onError(new Exception("Operation cancelled"));
             }
         });
@@ -140,7 +133,7 @@ public class AutomaticTransport extends HttpClientTransport {
     public SignalRFuture<Void> start(final ConnectionBase connection, final ConnectionType connectionType, final DataResultCallback callback) {
         SignalRFuture<Void> startFuture = new SignalRFuture<Void>();
 
-        resolveTransport(connection, connectionType, callback, 0, startFuture);
+        resolveTransport(connection, connectionType, callback, DEFAULT_LAUCH_MODE, startFuture);
 
         return startFuture;
     }
@@ -150,7 +143,6 @@ public class AutomaticTransport extends HttpClientTransport {
         if (mRealTransport != null) {
             return mRealTransport.send(connection, data, callback);
         }
-
         return null;
     }
 

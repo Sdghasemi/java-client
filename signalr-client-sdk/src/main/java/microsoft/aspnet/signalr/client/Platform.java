@@ -19,13 +19,19 @@ public class Platform {
     static boolean mIsAndroid = false;
     static PlatformComponent mPlatformComponent = null;
 
+    public static void setUserAgent(String userAgent) {
+        Platform.userAgent = userAgent;
+    }
+
+    static String userAgent;
+
     public static void loadPlatformComponent(PlatformComponent platformComponent) {
         mPlatformComponent = platformComponent;
     }
 
     /**
      * Creates an adequate HttpConnection for the current platform
-     * 
+     *
      * @param logger
      *            Logger to use with the connection
      * @return An HttpConnection
@@ -46,15 +52,15 @@ public class Platform {
      * Generates the User-Agent
      */
     public static String getUserAgent() {
-        String osName;
-
-        if (mPlatformComponent != null) {
-            osName = mPlatformComponent.getOSName();
-        } else {
-            osName = System.getProperty("os.name").toLowerCase(Locale.getDefault());
+        if(userAgent==null){
+            String osName;
+            if (mPlatformComponent != null) {
+                osName = mPlatformComponent.getOSName();
+            } else {
+                osName = System.getProperty("os.name").toLowerCase(Locale.getDefault());
+            }
+            userAgent = String.format("SignalR (lang=Java; os=%s; version=2.0)", osName);
         }
-        String userAgent = String.format("SignalR (lang=Java; os=%s; version=2.0)", osName);
-
         return userAgent;
     }
 }
